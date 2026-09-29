@@ -1,0 +1,154 @@
+/* The table every view but Settings prints into: hosts, JARM hashes, log lines, scan targets.
+   Banded rows and hairline rules, per the ground set in app.css. */
+
+.scroller { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; }
+th {
+  text-align: left;
+  padding: 0 12px 6px 0;
+  border-bottom: 1px solid var(--rule);
+  font: 10px/1 var(--sans);
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+}
+td { padding: 5px 12px 5px 0; vertical-align: top; }
+tbody tr.band > td { background: var(--band); }
+tbody tr.row { cursor: pointer; }
+tbody tr.row:hover > td { background: var(--hover); }
+tbody tr.row.selected > td { background: var(--hover); }
+tbody tr.row.selected > td:first-child { box-shadow: inset 2px 0 var(--accent); }
+.ip { font-weight: 600; }
+.rowbtn { background: none; border: 0; padding: 0; font: inherit; color: inherit; cursor: pointer; }
+th .rowbtn { letter-spacing: inherit; text-transform: inherit; }
+.rowbtn:hover { color: var(--ink); }
+.rowbtn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* Active ordering is marked on the header's existing rule; the glyph only reports direction. */
+th.sorted { border-bottom-color: var(--accent); }
+th.sorted .rowbtn::after { color: var(--accent); }
+th[aria-sort="ascending"] .rowbtn::after { content: " ↑"; }
+th[aria-sort="descending"] .rowbtn::after { content: " ↓"; }
+.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.muted { color: var(--muted); }
+.port-clean { color: var(--clean); }
+.port-flag { font-weight: 600; }
+.band-high, .port-flag.high { color: var(--high); }
+.band-low, .port-flag.low { color: var(--low); }
+.band-clean { color: var(--clean); }
+.band-ack { color: var(--ack); }
+.mark { display: inline-block; width: 7px; height: 7px; margin-right: 6px; background: currentColor; }
+/* Badges encode provenance; local signals use the quieter hollow style. */
+.badge {
+  display: inline-block;
+  margin-right: 5px;
+  padding: 0 5px;
+  border: 1px solid transparent;
+  font-size: 11px;
+}
+.badge-curated { background: var(--high); color: var(--paper); }
+.badge-crowd { background: var(--low); color: var(--paper); }
+.badge-local { color: var(--muted); border-color: var(--rule); }
+.confidence { margin-right: 5px; font-size: 11px; font-variant-numeric: tabular-nums; }
+/* The mark and its word are one token. Squeezed narrow the mark otherwise wraps onto its own
+   line, which set every row on a phone to double height. */
+td.band-high, td.band-low, td.band-clean, td.band-ack { white-space: nowrap; }
+.reason { max-width: 34ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pick { width: 1%; padding-left: 4px; }
+.pick input {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  vertical-align: middle;
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  background: transparent;
+  cursor: pointer;
+  position: relative;
+}
+.pick input:checked {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+.pick input::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  margin: auto;
+}
+.pick input:checked::after {
+  width: 8px;
+  height: 6px;
+  background: #fff;
+  clip-path: polygon(0 43%, 17% 25%, 40% 51%, 84% 0, 100% 18%, 40% 88%);
+}
+.pick input:indeterminate {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+.pick input:indeterminate::after { width: 8px; height: 2px; background: #fff; clip-path: none; }
+.pick input:disabled { opacity: .32; cursor: not-allowed; }
+.pick input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Expanded record: one block per open port. */
+.detail > td { padding: 4px 0 16px 0; background: var(--band); }
+.record { border-left: 2px solid var(--rule); padding: 6px 0 6px 12px; margin-bottom: 10px; }
+.record:last-child { margin-bottom: 0; }
+.record h3 { margin: 0 0 5px; font-size: 13px; font-weight: 600; }
+.record dl { display: grid; grid-template-columns: 84px 1fr; gap: 1px 12px; margin: 0; }
+.record dt { font: 10px/1.6 var(--sans); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.record dd { margin: 0; overflow-wrap: anywhere; }
+.record p { margin: 5px 0 0; }
+/* Set in the accent rather than left to the browser's own link blue, the one colour that would
+   otherwise sit outside the token set. Sized with the micro-labels: it annotates a line, it is
+   not the line. */
+.lookup { color: var(--accent); font-size: 11px; text-decoration: none; }
+.lookup:hover { text-decoration: underline; }
+.lookup:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* Lines up with the record text below it, which sits inside the binder rule and its padding. */
+.hostlookup { margin: 0 0 8px 14px; }
+/* Keep a whole column of links quiet but discoverable, then raise contrast on interaction. */
+.namelink { color: inherit; text-decoration-color: var(--rule); text-underline-offset: 3px; }
+.namelink:hover { color: var(--accent); text-decoration-color: currentColor; }
+.namelink:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* Inline, not the tooltip's usual inline-flex: a cell of long names has to keep wrapping. */
+.domains .tooltip { display: inline; }
+/* Wraps, unlike .num: a tarpit's port list would otherwise stretch the whole table. */
+.portlist { font-variant-numeric: tabular-nums; line-height: 1.8; }
+/* Same reason: a certificate with a dozen SANs would otherwise stretch the whole table. */
+.domains { overflow-wrap: anywhere; }
+/* A control that lives in a row, so it is quiet at rest — hollow and muted — and only takes the
+   ink of a real button on hover. Acknowledging a host and dropping a target both use it. */
+.ackbtn {
+  background: none;
+  border: 1px solid var(--rule);
+  padding: 1px 7px;
+  font: 11px/1.5 var(--mono);
+  letter-spacing: .08em;
+  color: var(--muted);
+  cursor: pointer;
+}
+.ackbtn:not(:disabled):hover { background: var(--hover); color: var(--ink); }
+.ackbtn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.ackbtn.ack-action { border-color: var(--ack); color: var(--ack); }
+.ackbtn.reset-action { border-color: var(--low); color: var(--low); }
+.ackbtn:disabled { border-color: var(--rule); color: var(--clean); cursor: default; }
+.ackbtn.blacklisted-action:disabled { border-color: var(--high); color: var(--high); }
+.bulk .ackbtn { padding: 4px 8px; }
+/* Pinned to the right edge. A host answering on a dozen ports pushes the row wider than the
+   screen, and a button that scrolls out of reach is no quicker than one buried in the record.
+   Needs its own background, or the cells it covers show through as they pass underneath. */
+/* The rule is what makes it read as a pinned layer. Without it, a row wide enough to slide under
+   the column looks like the last column is broken rather than covered. */
+.act { position: sticky; right: 0; background: var(--paper); text-align: right; border-left: 1px solid var(--rule); }
+td.act { padding: 5px 0 5px 10px; cursor: default; }
+th.act { padding: 0 0 6px 10px; }
+tbody tr.band > td.act { background: var(--band); }
+tbody tr.row:hover > td.act { background: var(--hover); }
+tbody tr.row.selected > td.act { background: var(--hover); }
+
+.lvl-ERROR { color: var(--high); font-weight: 600; }
+.lvl-ALERT { color: var(--high); font-weight: 600; }
+.lvl-WARN { color: var(--low); font-weight: 600; }
+.lvl-DEBUG { color: var(--clean); }

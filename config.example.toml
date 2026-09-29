@@ -1,0 +1,63 @@
+# Every key below is required. There are no defaults. An omitted or zero setting is a startup
+# error, so a missing line can never be mistaken for a working one. The only optional values
+# are scan.deny (an empty list denies nothing), the ThreatFox key (an empty key skips that
+# one feed), and feeds.domain_ignorelist (an empty list removes nothing).
+
+[config]
+# how often to re-read this file and the targets file, in seconds
+refresh_seconds = 60
+
+[feeds]
+# abuse.ch ThreatFox API key. Leave empty to skip the ThreatFox feed.
+# Treat this file as a secret once set. chmod 600, never commit it.
+threatfox_auth_key = ""
+
+# registrable or pseudo-domains whose feed indicators should be removed
+domain_ignorelist = []
+
+[scan]
+# allowed IPs, CIDRs and ASNs
+allow = ["192.168.0.2", "192.0.2.0/24", "AS13335"]
+
+# explicitly denied IPs, CIDRs or ASNs, e.g. a gateway
+deny = ["192.0.2.1"]
+
+# targets to check against the feeds and actively scan. Accepts IPs, CIDRs and ASNs
+targets_file = "scan_targets.example.json"
+# optional targets checked only for direct IP and IP:port feed hits; blank disables it
+feed_only_targets_file = ""
+
+# how often ASN entries are refreshed from RIPEstat (minimum 15 minutes)
+asn_refresh_minutes = 720
+
+# how many times each target IP is actively scanned per day (1-24)
+scans_per_day = 2
+
+# ports tried first in every full scan, and the only ports tried by "Scan common ports"
+common_ports = [22, 80, 443, 445, 3389, 4444, 8080, 8443, 50050]
+
+# maximum connections in flight at once. The full sweep is 65535 dials per target, so this is
+# what decides whether it takes hours or months. Raise `ulimit -n` past this before raising it.
+max_workers = 12000
+
+# how long a port has to answer before it counts as filtered. A closed port refuses instantly,
+# so only filtered ports pay this. That is what a sweep costs.
+#
+# This has to clear one round trip to the furthest target with room to spare, or a live host is
+# reported as entirely closed. A host 300ms away needs well over 300 here: the SYN/SYN-ACK is a
+# full RTT before anything else happens.
+dial_timeout_ms = 1000
+
+# how long the TLS handshake gets, measured from the moment the port answered. Separate from
+# dial_timeout_ms because only an open port ever reaches a handshake, and open ports are rare.
+# A generous budget here collects certificates from slow hosts without slowing the sweep.
+tls_timeout_ms = 3000
+
+# how long each JARM probe gets. A fingerprint is ten probes run one after another, so a silent
+# host costs ten times this value before the sweep moves past it — keep it well under
+# tls_timeout_ms. JARM fingerprints the server's TLS stack rather than its certificate, so it
+# survives the certificate rotation that defeats a fingerprint feed.
+#
+# Only ports that complete a TLS handshake are fingerprinted, so this budget is only ever spent
+# on a port already known to speak TLS.
+jarm_timeout_ms = 2000

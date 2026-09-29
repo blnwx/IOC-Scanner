@@ -1,0 +1,410 @@
+/* Bluebar. Continuous-form line-printer paper: banded rows, hairline rules, a dark binder
+   edge down the left. The scanner prints lines; this is the paper it prints them onto.
+   Dark mode drops the paper for a navy ground and lets the accent do the marking.
+
+   This file is the ground: tokens, page layout, the binder edge and its controls. The table lives
+   in table.css, the settings and targets editors in forms.css.
+
+   Each colour is one light-dark() pair, so the theme is this block and nothing else. Setting
+   color-scheme is also what restyles the native selects, search field and scrollbars. Floor is
+   Chrome 123 / Safari 17.5 / Firefox 120; an older browser would need these split into a base
+   :root plus an @media (prefers-color-scheme: dark) override. */
+:root {
+  color-scheme: light dark;
+  --paper: light-dark(#f2f5f9, #101823);
+  --band: light-dark(#e0e8f2, #18222f);
+  --rule: light-dark(#b8c6d6, #2c3a4c);
+  --ink: light-dark(#171b21, #e2e8f0);
+  --muted: light-dark(#55606e, #94a3b8);
+  /* Clean and low are the quiet end of the scale and the two that drift under 4.5:1 against the
+     banded rows. Both are set from the band, not the paper, since the band is the darker ground. */
+  --clean: light-dark(#586678, #7b8a9d);
+  /* Severity stays red and amber in both modes, brightened for dark: it must not read as blue,
+     and it must not collide with the accent. */
+  --high: light-dark(#b4231f, #ff6b63);
+  --low: light-dark(#a67c00, #e8a83c);
+  /* Acknowledged sits off the severity scale entirely: green reads as settled, and it is the one
+     colour on the page that cannot be mistaken for a degree of bad. Set from the band like the
+     other quiet tones. */
+  --ack: light-dark(#08783f, #63c088);
+  --accent: light-dark(#2563eb, #3b82f6);
+  --field: light-dark(#ffffff, #0b121c);
+  --hover: light-dark(#d5e2f2, #1f2c3d);
+  /* The binder edge is dark in both modes, so its own tones are fixed rather than paired. */
+  --edge: #16202e;
+  --edge-text: #cfdcea;
+  --edge-dim: #7f93ab;
+  --edge-line: #33445c;
+  --edge-field: #121b28;
+  --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+  --sans: ui-sans-serif, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+* { box-sizing: border-box; }
+.tooltip { position: relative; display: inline-flex; }
+.tooltip-popup {
+  position: absolute;
+  z-index: 2147483647;
+  width: max-content;
+  max-width: min(36ch, 80vw);
+  padding: 5px 7px;
+  transform: translate(-50%, -100%);
+  border: 1px solid var(--edge-line);
+  border-radius: 3px;
+  background: var(--edge);
+  color: var(--edge-text);
+  font: 11px/1.3 var(--sans);
+  text-align: left;
+  white-space: pre-line;
+  pointer-events: none;
+}
+.tooltip-left { transform: translate(-100%, -50%); }
+.tooltip-right { transform: translate(0, -50%); }
+.tooltip-bottom { transform: translate(-50%, 0); }
+#root { display: contents; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font: 13px/1.5 var(--mono);
+  display: grid;
+  grid-template-columns: 216px 1fr;
+  min-height: 100vh;
+}
+
+/* Sidebar: the binder edge. */
+.edge {
+  background: var(--edge);
+  color: var(--edge-text);
+  min-height: 100dvh;
+  padding: 20px 18px;
+}
+.wordmark { font: 600 15px/1 var(--sans); letter-spacing: .16em; text-transform: uppercase; }
+.tagline { margin: 6px 0 26px; color: var(--edge-dim); font-size: 11px; }
+.edge h2 {
+  margin: 22px 0 8px;
+  font: 600 10px/1 var(--sans);
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--edge-dim);
+}
+nav a, .theme {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: 0;
+  border-left: 2px solid transparent;
+  padding: 6px 0 6px 10px;
+  color: var(--edge-text);
+  font: 13px/1.4 var(--sans);
+  cursor: pointer;
+  text-decoration: none;
+}
+/* --paper is near-black in dark mode, which would leave the marker invisible. */
+nav a[aria-current="page"] { border-left-color: var(--accent); font-weight: 600; }
+nav a:hover, .theme:hover { color: #fff; }
+.theme { color: var(--edge-dim); }
+/* The sidebar had no focus ring of its own, so keyboard focus was invisible against the navy. */
+.edge :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Scan is the sidebar's primary operation, kept visible above view and filter controls. */
+.scan {
+  padding: 10px;
+  border: 1px solid var(--edge-line);
+  background: var(--edge-field);
+}
+.scan-actions { display: grid; gap: 6px; margin-top: 6px; }
+.scan-actions label { color: var(--edge-dim); font-size: 10px; text-transform: uppercase; }
+.scan-actions input {
+  min-width: 0;
+  padding: 7px 9px;
+  border: 1px solid var(--edge-line);
+  background: var(--edge-field);
+  color: var(--edge-text);
+  font: 12px/1.3 var(--mono);
+}
+.scan-actions input:disabled { color: var(--edge-dim); }
+.run {
+  width: 100%;
+  text-align: left;
+  padding: 7px 10px;
+  background: var(--edge);
+  border: 1px solid var(--edge-line);
+  color: var(--edge-text);
+  font: 12px/1.3 var(--sans);
+  cursor: pointer;
+}
+.run:not(:disabled):hover { border-color: var(--accent); color: #fff; }
+.run:disabled { color: var(--edge-dim); cursor: default; }
+/* Says which sweep is running and when the last one ended, so a disabled button always has its
+   reason next to it. Brightens while something is running: the sidebar is on screen from every
+   view, and this is the one line on it that changes on its own. */
+.scan-state {
+  display: grid;
+  grid-template-columns: 8px 1fr;
+  gap: 1px 7px;
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.4;
+}
+.scan-state + .scan-state { margin-top: 8px; }
+/* The state on its own line so the eye lands in the same place every poll, the particulars under
+   it. In 216px of sidebar a single sentence wraps to three ragged lines and reads as prose. */
+.scan-status { grid-column: 2; color: var(--edge-text); font-weight: 600; }
+.scan-detail { grid-column: 2; color: var(--edge-dim); }
+.scan-detail:empty { display: none; }
+/* Filled and beating while a sweep runs, a hollow ring when nothing is. The fill is what carries
+   the state; the pulse only draws the eye, which is why reduced motion can drop it. */
+.scan-state .dot {
+  width: 8px;
+  height: 8px;
+  margin-top: 4px;
+  border: 1px solid var(--edge-line);
+  border-radius: 50%;
+}
+.scan-state.busy .dot {
+  border-color: var(--accent);
+  background: var(--accent);
+  animation: sweeping 1.6s ease-in-out infinite;
+}
+@keyframes sweeping {
+  50% { opacity: .25; }
+}
+
+/* A disclosure only on phones; open on desktop, where its summary disappears and nav is unchanged. */
+#view-menu > summary {
+  display: none;
+  list-style: none;
+  cursor: pointer;
+}
+#view-menu > summary::-webkit-details-marker { display: none; }
+
+/* The band filter is a set, not a choice, so it is checkboxes rather than a select. A fieldset
+   carries the group name to a screen reader the way a label carries a single control's. */
+.checks { margin: 0; padding: 0; border: 0; }
+.checks legend {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.checks label { display: flex; align-items: center; gap: 7px; padding: 2px 0; cursor: pointer; }
+.checks input {
+  width: 13px;
+  height: 13px;
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+main { padding: 22px 26px 40px; min-width: 0; }
+
+/* Summary tiles: figures set large in mono, label beneath. */
+.tiles { display: flex; flex-wrap: wrap; gap: 30px; padding-bottom: 14px; }
+.tile output { display: block; font-size: 26px; font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+.tile span { font: 10px/1 var(--sans); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.tile.high output { color: var(--high); }
+.tile.low output { color: var(--low); }
+.tile.ack output { color: var(--ack); }
+.tile-action { padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.tile-action:hover span { color: var(--ink); }
+.tile-action[aria-pressed="true"] { box-shadow: 0 2px var(--accent); }
+.tile-action:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+.bar { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; margin: 16px 0 12px; }
+.bar > input { flex: 1 1 240px; min-width: 0; padding: 7px 9px; border: 1px solid var(--rule); background: var(--field); color: var(--ink); font: 13px/1.3 var(--mono); }
+.bar .count { color: var(--muted); font-size: 12px; white-space: nowrap; }
+/* Toolbar groups use the same hairline that separates bulk actions; the controls stay on the
+   paper surface instead of inheriting the retired navy filter panel. Wide, the disclosure is not a
+   disclosure: the summary is hidden and the controls are always open. It cannot be display:contents
+   — <details> is one of the elements that ignores it — so it stays a box and the row that wraps is
+   the one inside it. */
+.filter-disclosure > summary { display: none; list-style: none; }
+.filter-disclosure > summary::-webkit-details-marker { display: none; }
+.filter-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 14px; }
+.bar-group { display: flex; align-items: center; gap: 7px; padding-left: 14px; border-left: 1px solid var(--rule); }
+.bar-group > span {
+  font: 10px/1 var(--sans);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.bar-group select, .bar-group input:not([type="checkbox"]) {
+  min-width: 0;
+  padding: 5px 6px;
+  border: 1px solid var(--rule);
+  background: var(--field);
+  color: var(--ink);
+  font: 12px/1.3 var(--mono);
+}
+#f-port { width: 7ch; }
+.filter-count {
+  min-width: 17px;
+  padding: 0 4px;
+  background: var(--accent);
+  color: #fff;
+  font: 600 10px/17px var(--mono);
+  text-align: center;
+  letter-spacing: 0;
+}
+.filter-count:empty { display: none; }
+.bulk { display: flex; align-items: center; gap: 6px; padding-left: 14px; border-left: 1px solid var(--rule); white-space: nowrap; }
+.selected-count { min-width: 9ch; color: var(--muted); font-size: 11px; text-align: right; }
+.hosts-bar {
+  display: grid;
+  grid-template-columns: minmax(240px, 1fr) auto;
+}
+.hosts-bar > input { grid-area: 1 / 1; }
+.hosts-bar > .count { grid-area: 1 / 2; justify-self: end; }
+/* Row two is one wrapping line rather than two tracks. The filters are wider than half a laptop
+   screen, so in a fixed track they overflow it and end up underneath the bulk buttons. Here the
+   filters ask for their full width, which pushes the buttons onto their own line first; only once
+   the filters alone are too wide do they wrap internally. */
+.hosts-toolbar {
+  grid-row: 2;
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 14px;
+}
+.hosts-toolbar > .filter-disclosure { flex: 1 1 auto; min-width: 0; }
+.hosts-toolbar > .bulk { margin-left: auto; }
+.hosts-bar .filter-controls > *, .hosts-bar .bulk { height: 28px; }
+.hosts-bar .bar-clear { padding: 5px 8px; }
+
+.pager { display: flex; align-items: center; gap: 12px; margin-top: 16px; border-top: 1px solid var(--rule); padding-top: 12px; }
+.pager button, .pager select { background: none; border: 1px solid var(--rule); padding: 4px 12px; font: 12px/1.4 var(--mono); color: var(--ink); }
+.pager button { cursor: pointer; }
+.pager button:disabled { color: var(--clean); cursor: default; }
+.pager button:not(:disabled):hover { background: var(--band); }
+.pager .num { color: var(--muted); font-size: 12px; }
+.pager label { display: flex; align-items: center; gap: 6px; margin-left: auto; color: var(--muted); font-size: 11px; }
+.empty { padding: 28px 0; color: var(--muted); }
+
+[hidden] { display: none !important; }
+
+@media (max-width: 820px) {
+  body { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+  /* Only the compact app and view menu stay navy. Scan belongs to the page surface below them. */
+  .edge {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    padding: 0;
+    background: var(--paper);
+    color: var(--ink);
+  }
+  .tagline { display: none; }
+  .wordmark {
+    padding: 16px 16px 12px;
+    background: var(--edge);
+    color: var(--edge-text);
+    font-size: 13px;
+  }
+  .view-section { order: 1; padding: 0 16px 16px; background: var(--edge); }
+  .scan-section { order: 2; padding: 16px 16px 0; }
+  .appearance { order: 3; padding: 0 16px 16px; }
+  .view-heading { display: none; }
+
+  /* Current view is the button; the five destinations appear only while it is open. */
+  #view-menu > summary {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 10px;
+    min-height: 44px;
+    padding: 10px 12px;
+    border: 1px solid var(--edge-line);
+    background: var(--edge-field);
+    color: var(--edge-text);
+    font: 600 13px/1.3 var(--sans);
+  }
+  #view-menu > summary > :first-child {
+    color: var(--edge-dim);
+    font-size: 10px;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+  }
+  #view-menu > summary::after { content: "+"; color: var(--edge-dim); }
+  #view-menu[open] > summary::after { content: "−"; }
+  nav {
+    display: grid;
+    padding: 6px 0;
+    border: 1px solid var(--edge-line);
+    border-top: 0;
+    background: var(--edge-field);
+  }
+  nav a {
+    min-height: 44px;
+    padding: 10px 12px;
+    text-align: left;
+  }
+  nav a[aria-current="page"] { background: var(--edge); }
+
+  .scan-section .scan-heading { margin: 0 0 8px; color: var(--muted); }
+  .scan { padding: 12px; border-color: var(--rule); background: var(--field); }
+  .scan-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 8px; }
+  .scan-actions label, .scan-actions input { grid-column: 1 / -1; }
+  .scan-section .scan-status { color: var(--ink); }
+  .scan-section .scan-detail { color: var(--muted); }
+  .scan-section .dot { border-color: var(--rule); }
+  .run {
+    min-height: 44px;
+    padding: 8px;
+    border-color: var(--rule);
+    background: var(--field);
+    color: var(--ink);
+    text-align: center;
+  }
+  .scan-actions .run:not(:disabled):hover { border-color: var(--accent); background: var(--band); color: var(--ink); }
+  .run:disabled { color: var(--clean); }
+
+  /* Filters collapse inside the page toolbar; widening always opens them again. */
+  .filter-disclosure {
+    width: 100%;
+    border: 1px solid var(--rule);
+    background: var(--field);
+  }
+  .filter-disclosure > summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 44px;
+    padding: 8px 12px;
+    color: var(--muted);
+    font: 600 10px/1 var(--sans);
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+  .filter-controls { gap: 10px; padding: 0 12px 12px; }
+  .bar-group { flex: 1 1 150px; padding-left: 0; border-left: 0; }
+  .checks { flex-basis: 100%; }
+  .bar-group select, .bar-group input:not([type="checkbox"]) { flex: 1; padding: 9px 8px; }
+  /* No room for two columns of anything: the toolbar takes a line of its own and stacks. */
+  .hosts-bar { display: flex; }
+  .hosts-toolbar { flex: 1 1 100%; flex-direction: column; align-items: stretch; }
+  .hosts-toolbar > .bulk { margin-left: 0; }
+  .hosts-bar .filter-controls { display: grid; grid-template-columns: minmax(0, 1fr); }
+  .hosts-bar .filter-controls > *, .hosts-bar .bulk { height: auto; }
+  .hosts-bar .checks { display: flex; flex-wrap: wrap; }
+  .hosts-bar .checks > .bar-label { flex-basis: 100%; }
+  /* The edge becomes paper on phones, so the appearance control needs paper colours too. */
+  .appearance h2 { margin: 16px 0 6px; color: var(--muted); }
+  .appearance .theme { min-height: 44px; padding: 10px 0; color: var(--muted); }
+  .appearance .theme:hover { color: var(--ink); }
+
+  /* Six tiles at a 30px flex gap wrap unevenly and strand the last one. Even tracks instead. */
+  .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .tile output { font-size: 22px; }
+  .bulk { width: 100%; padding: 8px 0 0; border-top: 1px solid var(--rule); border-left: 0; }
+  .selected-count { margin-right: auto; text-align: left; }
+  main { padding: 0 16px 16px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}
